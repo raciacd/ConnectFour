@@ -34,6 +34,7 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         self.run_time = 0
         self.node_count = 0
         self.num_rollouts = 0
+        self.num_states_generated = 0
 
     def select_node(self) -> tuple: #Selects a node so it can traverse it until finding a new node or leaf
         node = self.root
@@ -46,6 +47,7 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
 
             node = random.choice(max_nodes)
             state.move(node.move)
+            self.num_states_generated += 1
 
             if node.N == 0:
                 return node, state
@@ -53,6 +55,7 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         if self.expand(node, state):
             node = random.choice(list(node.children.values())) #Picks a newly expanded node
             state.move(node.move)
+            self.num_states_generated += 1
 
         return node, state
 
@@ -68,6 +71,7 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
     def roll_out(self, state: ConnectState) -> int: #Plays the game with random moves until reaching an end result
         while not state.game_over():
             state.move(random.choice(state.get_legal_moves()))
+            self.num_states_generated += 1
 
         return state.get_outcome()
 
@@ -90,6 +94,7 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         start_time = time.process_time()
 
         num_rollouts = 0
+        self.num_states_generated = 0
         while time.process_time() - start_time < time_limit:
             node, state = self.select_node()
             outcome = self.roll_out(state)
@@ -120,4 +125,4 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         self.root = Node(None, None)
 
     def statistics(self) -> tuple: #Returns the number of simulations and time elapsed
-        return self.num_rollouts, self.run_time
+        return self.num_rollouts, self.run_time, self.num_states_generated

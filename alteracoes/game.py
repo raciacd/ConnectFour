@@ -1,6 +1,7 @@
 from ConnectState import ConnectState
 from mcts import MCTS
 from random_ai import RandomAI
+from meta import GameMeta
 
 def get_human_move(state):
     while True:
