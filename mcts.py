@@ -36,48 +36,52 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         self.num_rollouts = 0
         self.num_states_generated = 0
 
-    def select_node(self) -> tuple: #Selects a node so it can traverse it until finding a new node or leaf
+    def select_node(self) -> tuple:
+        # Selects a node from the tree, descending by choosing the children with the highest UCT value
         node = self.root
         state = deepcopy(self.root_state)
 
-        while len(node.children) != 0: #Looks for highest value children in the visited nodes
+        while len(node.children) != 0:
+            # Selects the child(ren) with the highest UCT value and chooses deterministically or randomly in case of a tie
             children = node.children.values()
             max_value = max(children, key=lambda n: n.value()).value()
             max_nodes = [n for n in children if n.value() == max_value]
-
-            node = random.choice(max_nodes)
+            node = max_nodes[0] if len(max_nodes) == 1 else random.choice(max_nodes)
             state.move(node.move)
             self.num_states_generated += 1
 
+            # If the selected node has not been visited yet, end the selection
             if node.N == 0:
                 return node, state
 
+        # If there are no visited children, expand the node and select one of the newly created nodes
         if self.expand(node, state):
-            node = random.choice(list(node.children.values())) #Picks a newly expanded node
+            node = random.choice(list(node.children.values()))
             state.move(node.move)
             self.num_states_generated += 1
 
         return node, state
 
-    def expand(self, parent: Node, state: ConnectState) -> bool: #Adds children based on all possible moves
+    def expand(self, parent: Node, state: ConnectState) -> bool:
+        # Expands a node by adding all possible child nodes from legal moves
         if state.game_over():
             return False
 
         children = [Node(move, parent) for move in state.get_legal_moves()]
         parent.add_children(children)
-
         return True
 
-    def roll_out(self, state: ConnectState) -> int: #Plays the game with random moves until reaching an end result
+    def roll_out(self, state: ConnectState) -> int:
+        # Performs a rollout (simulated game with random moves) until the game ends
         while not state.game_over():
-            state.move(random.choice(state.get_legal_moves()))
+            legal_moves = state.get_legal_moves()
+            state.move(random.choice(legal_moves))
             self.num_states_generated += 1
 
         return state.get_outcome()
 
-    def back_propagate(self, node: Node, turn: int, outcome: int) -> None: #Propagates back to the root and adds points as rewards for victories
-
-        #For the current player, not the next player
+    def back_propagate(self, node: Node, turn: int, outcome: int) -> None:
+        # Backpropagates the result of the rollout through the tree, alternating the reward for each layer
         reward = 0 if outcome == turn else 1
 
         while node is not None:
@@ -89,33 +93,39 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
             else:
                 reward = 1 - reward
 
-    def search(self, time_limit: int): #Define a time limit for playing the simulations of the game (in cpu seconds to avoid machine interference).
-        #Can be change to time.time() to choose real time
+    def search(self, time_limit: int):
+        # Performs rollouts within the time limit (in CPU seconds)
         start_time = time.process_time()
-
         num_rollouts = 0
         self.num_states_generated = 0
+
         while time.process_time() - start_time < time_limit:
             node, state = self.select_node()
             outcome = self.roll_out(state)
             self.back_propagate(node, state.to_play, outcome)
             num_rollouts += 1
 
-        run_time = time.process_time() - start_time
-        self.run_time = run_time
+        self.run_time = time.process_time() - start_time
         self.num_rollouts = num_rollouts
 
-    def best_move(self): #Chooses the node with most visits (during the UCT simulations)
+    def best_move(self):
+        # If it is the 1st move of player one (empty board), return the middle column
+        if (self.root_state.to_play == GameMeta.PLAYERS['one'] and 
+            all(cell == 0 for row in self.root_state.board for cell in row)):
+            return GameMeta.COLS // 2
+
+        # If the game is over, return -1 (no valid move)
         if self.root_state.game_over():
             return -1
 
+        # Selects the node with the highest number of visits among the root's children
         max_value = max(self.root.children.values(), key=lambda n: n.N).N
         max_nodes = [n for n in self.root.children.values() if n.N == max_value]
         best_child = random.choice(max_nodes)
-
         return best_child.move
 
-    def move(self, move): #Updates the tree with new moves
+    def move(self, move):
+        # Updates the search tree with the performed move
         if move in self.root.children:
             self.root_state.move(move)
             self.root = self.root.children[move]
@@ -124,5 +134,6 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
         self.root_state.move(move)
         self.root = Node(None, None)
 
-    def statistics(self) -> tuple: #Returns the number of simulations and time elapsed
+    def statistics(self) -> tuple:
+        # Returns statistics: number of rollouts, total execution time, and generated states
         return self.num_rollouts, self.run_time, self.num_states_generated
