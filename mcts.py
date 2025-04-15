@@ -105,19 +105,25 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
             if simulated.check_win() == current_player:
                 self.root.children[move] = Node(move, self.root)
                 self.root.children[move].N = 1_000_000
+                self.num_rollouts = 0
+                self.run_time = 0
+                self.num_states_generated = 0
                 return
+        # Verifies imminent losses
+        opponent = GameMeta.PLAYERS['two'] if current_player == GameMeta.PLAYERS['one'] else GameMeta.PLAYERS['one']
 
-        # Verifies imminent loss before mcts
         for move in legal_moves:
             simulated = deepcopy(self.root_state)
+            simulated.to_play = opponent
             simulated.move(move)
-            for opp_move in simulated.get_legal_moves():
-                opp_sim = deepcopy(simulated)
-                opp_sim.move(opp_move)
-                if opp_sim.check_win() == opponent:
-                    self.root.children[move] = Node(move, self.root)
-                    self.root.children[move].N = 500_000
-                    return
+
+            if simulated.check_win() == opponent:
+                self.root.children[move] = Node(move, self.root)
+                self.root.children[move].N = 500_000
+                self.num_rollouts = 0
+                self.run_time = 0
+                self.num_states_generated = 0
+                return
 
         # Performs rollouts within the time limit (in CPU seconds)
         start_time = time.process_time()
