@@ -1,48 +1,42 @@
 import random
 import time
 import math
-from copy import deepcopy
+from datetime import datetime
 
 from ConnectState import ConnectState
 from meta import GameMeta, MCTSMeta
 
 
-class Node: #Represents a node in the tree
+class Node:
     def __init__(self, move, parent):
-        self.move = move #Move that generated this node
+        self.move = move
         self.parent = parent
-        self.N = 0 #Number of times the node was visited
-        self.Q = 0 #Number of wins reached from this node
-        self.children = {} #Represents the next possible moves
-        self.outcome = GameMeta.PLAYERS['none'] #Game state
+        self.N = 0
+        self.Q = 0
+        self.children = {}
+        self.outcome = GameMeta.PLAYERS['none']
 
-    def add_children(self, children: dict) -> None: #Adds multiple nodes to the current one
-        for child in children:
-            self.children[child.move] = child
-
-    def value(self, explore: float = MCTSMeta.EXPLORATION): #Applies the Upper Confidence bounds applied to Trees to evaluate the node
+    def value(self, explore: float = MCTSMeta.EXPLORATION):
         if self.N == 0:
             return 0 if explore == 0 else GameMeta.INF
         else:
             return self.Q / self.N + explore * math.sqrt(math.log(self.parent.N) / self.N)
 
 
-class MCTS: #Initialize MCTS with the current game state (creates the root)
+class MCTS:
     def __init__(self, state=ConnectState()):
-        self.root_state = deepcopy(state) #Copies the game state so we don't modify the original game
+        self.root_state = state.clone()
         self.root = Node(None, None)
         self.run_time = 0
         self.node_count = 0
         self.num_rollouts = 0
         self.num_states_generated = 0
 
-    def select_node(self) -> tuple:
-        # Selects a node from the tree, descending by choosing the children with the highest UCT value
+    def select_node(self):
         node = self.root
-        state = deepcopy(self.root_state)
+        state = self.root_state.clone()
 
-        while len(node.children) != 0:
-            # Selects the child(ren) with the highest UCT value and chooses deterministically or randomly in case of a tie
+        while node.children:
             children = node.children.values()
             max_value = max(children, key=lambda n: n.value()).value()
             max_nodes = [n for n in children if n.value() == max_value]
@@ -50,57 +44,67 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
             state.move(node.move)
             self.num_states_generated += 1
 
-            # If the selected node has not been visited yet, end the selection
             if node.N == 0:
                 return node, state
 
-        # If there are no visited children, expand the node and select one of the newly created nodes
-        if self.expand(node, state):
-            node = random.choice(list(node.children.values()))
-            state.move(node.move)
-            self.num_states_generated += 1
+        legal_moves = state.get_legal_moves()
+        if not legal_moves or state.game_over():
+            return node, state
 
-        return node, state
+        move = random.choice(legal_moves)
+        child = Node(move, node)
+        node.children[move] = child
+        state.move(move)
+        self.num_states_generated += 1
+        return child, state
 
-    def expand(self, parent: Node, state: ConnectState) -> bool:
-        # Expands a node by adding all possible child nodes from legal moves
-        if state.game_over():
-            return False
-
-        children = [Node(move, parent) for move in state.get_legal_moves()]
-        parent.add_children(children)
-        return True
-
-    def roll_out(self, state: ConnectState) -> int:
-        # Performs a rollout (simulated game with random moves) until the game ends
-        while not state.game_over():
+    def roll_out(self, state: ConnectState, max_depth=20):
+        depth = 0
+        while not state.game_over() and depth < max_depth:
             legal_moves = state.get_legal_moves()
-            state.move(random.choice(legal_moves))
+            best_move = None
+
+            # 1. Jogada de vitória imediata
+            for move in legal_moves:
+                sim = state.clone()
+                sim.move(move)
+                if sim.check_win() == state.to_play:
+                    best_move = move
+                    break
+
+            if best_move is None:
+                # 2. Bloquear vitória do adversário
+                opponent = GameMeta.PLAYERS['two'] if state.to_play == GameMeta.PLAYERS['one'] else GameMeta.PLAYERS['one']
+                for move in legal_moves:
+                    sim = state.clone()
+                    sim.to_play = opponent
+                    sim.move(move)
+                    if sim.check_win() == opponent:
+                        best_move = move
+                        break
+
+            if best_move is None:
+                # 3. Prioridade ao centro
+                center = GameMeta.COLS // 2
+                if center in legal_moves:
+                    best_move = center
+                else:
+                    # 4. Jogada mais próxima do centro
+                    best_move = sorted(legal_moves, key=lambda x: abs(x - center))[0]
+
+            state.move(best_move)
             self.num_states_generated += 1
+            depth += 1
 
         return state.get_outcome()
-
-    def back_propagate(self, node: Node, turn: int, outcome: int) -> None:
-        # Backpropagates the result of the rollout through the tree, alternating the reward for each layer
-        reward = 0 if outcome == turn else 1
-
-        while node is not None:
-            node.N += 1
-            node.Q += reward
-            node = node.parent
-            if outcome == GameMeta.OUTCOMES['draw']:
-                reward = 0
-            else:
-                reward = 1 - reward
 
     def search(self, time_limit: int):
         legal_moves = self.root_state.get_legal_moves()
         current_player = self.root_state.to_play
         opponent = GameMeta.PLAYERS['two'] if current_player == GameMeta.PLAYERS['one'] else GameMeta.PLAYERS['one']
 
-        # Verifies imminent wins before mcts
         for move in legal_moves:
-            simulated = deepcopy(self.root_state)
+            simulated = self.root_state.clone()
             simulated.move(move)
             if simulated.check_win() == current_player:
                 self.root.children[move] = Node(move, self.root)
@@ -109,14 +113,11 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
                 self.run_time = 0
                 self.num_states_generated = 0
                 return
-        # Verifies imminent losses
-        opponent = GameMeta.PLAYERS['two'] if current_player == GameMeta.PLAYERS['one'] else GameMeta.PLAYERS['one']
 
         for move in legal_moves:
-            simulated = deepcopy(self.root_state)
+            simulated = self.root_state.clone()
             simulated.to_play = opponent
             simulated.move(move)
-
             if simulated.check_win() == opponent:
                 self.root.children[move] = Node(move, self.root)
                 self.root.children[move].N = 500_000
@@ -125,46 +126,73 @@ class MCTS: #Initialize MCTS with the current game state (creates the root)
                 self.num_states_generated = 0
                 return
 
-        # Performs rollouts within the time limit (in CPU seconds)
         start_time = time.process_time()
-        num_rollouts = 0
+        last_time_check = time.time()
+        rollouts_this_second = 0
+        total_rollouts = 0
         self.num_states_generated = 0
+
+        print("Iniciando MCTS com estatísticas ao vivo...")
 
         while time.process_time() - start_time < time_limit:
             node, state = self.select_node()
             outcome = self.roll_out(state)
-            self.back_propagate(node, state.to_play, outcome)
-            num_rollouts += 1
+
+            # Estratégica retropropagação
+            reward = 1 if outcome == self.root_state.to_play else 0
+            if outcome == GameMeta.OUTCOMES['draw']:
+                reward = 0.5
+            temp = node
+            while temp:
+                temp.N += 1
+                temp.Q += reward
+                reward = 1 - reward if outcome != GameMeta.OUTCOMES['draw'] else 0.5
+                temp = temp.parent
+
+            rollouts_this_second += 1
+            total_rollouts += 1
+
+            now = time.time()
+            if now - last_time_check >= 1:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Iterações por segundo: {rollouts_this_second}")
+                rollouts_this_second = 0
+                last_time_check = now
 
         self.run_time = time.process_time() - start_time
-        self.num_rollouts = num_rollouts
+        self.num_rollouts = total_rollouts
 
     def best_move(self):
-        # If it is the 1st move of player one (empty board), return the middle column
         if (self.root_state.to_play == GameMeta.PLAYERS['one'] and 
             all(cell == 0 for row in self.root_state.board for cell in row)):
             return GameMeta.COLS // 2
 
-        # If the game is over, return -1 (no valid move)
         if self.root_state.game_over():
             return -1
 
-        # Selects the node with the highest number of visits among the root's children
         max_value = max(self.root.children.values(), key=lambda n: n.N).N
         max_nodes = [n for n in self.root.children.values() if n.N == max_value]
         best_child = random.choice(max_nodes)
         return best_child.move
 
     def move(self, move):
-        # Updates the search tree with the performed move
         if move in self.root.children:
             self.root_state.move(move)
             self.root = self.root.children[move]
-            return
-
-        self.root_state.move(move)
-        self.root = Node(None, None)
+        else:
+            self.root_state.move(move)
+            self.root = Node(None, None)
 
     def statistics(self) -> tuple:
-        # Returns statistics: number of rollouts, total execution time, and generated states
         return self.num_rollouts, self.run_time, self.num_states_generated
+
+
+# Adicionar este método à classe ConnectState:
+def connectstate_clone(self):
+    new_state = ConnectState()
+    new_state.board = [row[:] for row in self.board]
+    new_state.to_play = self.to_play
+    new_state.height = self.height[:]
+    new_state.last_played = self.last_played[:]
+    return new_state
+
+ConnectState.clone = connectstate_clone
