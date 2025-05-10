@@ -23,4 +23,10 @@ class DecisionTreeAI:
 
     def best_move(self, state):
         features = state.get_features()
-        return int(self.model.predict([features])[0])
+        predicted_move = int(self.model.predict([features])[0])
+
+        if predicted_move in state.get_legal_moves(): #checa se a jogada prevista é legal
+            return predicted_move
+        else:
+            #escolha aleatória entre jogadas legais
+            return random.choice(state.get_legal_moves())
