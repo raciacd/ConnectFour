@@ -146,3 +146,24 @@ class ConnectState:
         
         print('=============================')
         print('  1 | 2 | 3 | 4 | 5 | 6 | 7  ')
+
+
+    ######## funcionando #######
+    def get_features(self):
+        #converte o estado do jogo em features para ser utilizados pela decison tree
+        features = []
+        #cria os 42 estados
+        for row in self.board:
+            features.extend(row)
+        #proximo jogador
+        features.append(self.to_play) 
+        #altura da coluna de circulos
+        features.extend([GameMeta.ROWS - 1 - h for h in self.height])
+        return features
+
+    def get_compact_state(self):
+        #pega o estado do tabuleiro 
+        return (self.board.tobytes(), self.to_play)
+
+
+    #################

@@ -1,20 +1,18 @@
-from ConnectState import ConnectState #Game state and interface
-#Import every search/play method
+from ConnectState import ConnectState
 from mcts import MCTS
 from random_ai import RandomAI
+from random_ai import DecisionTreeAI  #####
 
 def get_human_move(state):
     while True:
         try:
-            user_move = int(input("Enter a move: ")) - 1 #User chooses a column from 1 to 7, for better understanding
+            user_move = int(input("Enter a move: ")) - 1
             if user_move in state.get_legal_moves():
                 return user_move
             else:
                 print("Illegal move")
         except ValueError:
             print("Please enter a valid number")
-
-#Define all playable algorithms
 
 def get_mcts_move(mcts):
     print("Thinking...")
@@ -27,24 +25,35 @@ def get_mcts_move(mcts):
 def get_random_move(random_ai):
     return random_ai.best_move()
 
-def get_player_type(player_num): #Game settings, lets the user select the playing algorithms or the manual play
+def get_decisiontree_move(dt_ai, state):
+    print("Decision Tree thinking...")
+    return dt_ai.best_move(state)
+
+def get_player_type(player_num):
     while True:
         try:
-            choice = int(input(f"Select Player {player_num} type: \n1 = Human\n2 = MCTS\n3 = Random\n"))
-            if choice in [1, 2, 3]:
+            choice = int(input(
+                f"Select Player {player_num} type: \n"
+                "1 = Human\n"
+                "2 = MCTS\n"
+                "3 = Random\n"
+                "4 = Decision Tree\n"  ####
+            ))
+            if choice in [1, 2, 3, 4]:  ####
                 return choice
             else:
-                print("Please enter 1, 2, or 3.")
+                print("Please enter 1-4.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 
 def play():
     state = ConnectState()
-    #Each variable must be duplicated so we can keep track of the player
     mcts1 = MCTS(state)
     mcts2 = MCTS(state)
     random_ai1 = RandomAI(state)
     random_ai2 = RandomAI(state)
+    dt_ai1 = DecisionTreeAI()  #####
+    dt_ai2 = DecisionTreeAI()  #####
     
     player1_type = get_player_type(1)
     player2_type = get_player_type(2)
@@ -53,22 +62,24 @@ def play():
         print("Current state:")
         state.print()
 
+        # Player 1 move
         if player1_type == 1:
             move = get_human_move(state)
         elif player1_type == 2:
             move = get_mcts_move(mcts1)
-        else:
+        elif player1_type == 3:
             move = get_random_move(random_ai1)
+        else:  # Decision Tree
+            move = get_decisiontree_move(dt_ai1, state)
 
-        #Keeps track of the table state for the MCTS, not needed for random since it does not compare states
         state.move(move)
         mcts1.move(move)
         mcts2.move(move)
 
         if state.game_over():
             state.print()
-            outcome = state.get_outcome() #Returns value 1 to 3 from ConnectState, we don't need to check 1 or 2 since the execution order will provide us with the correct winner
-            if outcome == 3: #Although we don't check 1 or 2, we need to check state 3 draw, otherwise there will be no remaing moves and the current player will be incorrectly declared winner
+            outcome = state.get_outcome()
+            if outcome == 3:
                 print("Game ended in a draw!")
             else:
                 print("Player 1 won!")
@@ -77,12 +88,15 @@ def play():
         print("Current state:")
         state.print()
 
+        # Player 2 move
         if player2_type == 1:
             move = get_human_move(state)
         elif player2_type == 2:
             move = get_mcts_move(mcts2)
-        else:
+        elif player2_type == 3:
             move = get_random_move(random_ai2)
+        else:  ####
+            move = get_decisiontree_move(dt_ai2, state)
 
         state.move(move)
         mcts1.move(move)
