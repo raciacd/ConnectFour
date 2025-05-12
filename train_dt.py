@@ -16,7 +16,7 @@ def train_model():
 
     
     # Split data (80% train, 20% test)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     
     # Train model
     dt = ID3DecisionTree(max_depth=10)
