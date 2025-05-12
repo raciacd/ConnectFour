@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 from meta import GameMeta
 
@@ -11,7 +10,7 @@ class ConnectState:
         self.last_played = []
 
     def get_board(self):
-        return deepcopy(self.board)
+        return [row[:] for row in self.board]
 
     def move(self, col):
         self.board[self.height[col]][col] = self.to_play
