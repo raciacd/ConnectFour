@@ -58,7 +58,7 @@ class MCTS:
         self.num_states_generated += 1
         return child, state
 
-    def roll_out(self, state: ConnectState, max_depth=20):
+    def roll_out(self, state: ConnectState, max_depth=50):
         depth = 0
         while not state.game_over() and depth < max_depth:
             legal_moves = state.get_legal_moves()
@@ -220,8 +220,6 @@ class MCTS:
                 score += 50
 
         return score
-
-
 # Adicionar este método à classe ConnectState:
 def connectstate_clone(self):
     new_state = ConnectState()
@@ -232,3 +230,20 @@ def connectstate_clone(self):
     return new_state
 
 ConnectState.clone = connectstate_clone
+    
+class WeakMCTS(MCTS):
+    def __init__(self, state=ConnectState(), rollout_depth=8):
+        super().__init__(state)
+        self.rollout_depth = rollout_depth
+
+    def roll_out(self, state: ConnectState, max_depth=None):
+        if max_depth is None:
+            max_depth = self.rollout_depth
+        depth = 0
+        while not state.game_over() and depth < max_depth:
+            legal_moves = state.get_legal_moves()
+            move = random.choice(legal_moves)
+            state.move(move)
+            self.num_states_generated += 1
+            depth += 1
+        return state.get_outcome()

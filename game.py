@@ -16,7 +16,7 @@ def get_human_move(state):
 
 def get_mcts_move(mcts):
     print("Thinking...")
-    mcts.search(2)
+    mcts.search(5)
     num_rollouts, run_time, num_states = mcts.statistics()
     print("Statistics: ", num_rollouts, "rollouts in", run_time, "seconds")
     print("States generated:", num_states)

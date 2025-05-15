@@ -1,4 +1,3 @@
-import numpy as np
 from meta import GameMeta
 
 
@@ -25,79 +24,6 @@ class ConnectState:
         if len(self.last_played) > 0 and self.check_win_from(self.last_played[0], self.last_played[1]):
             return self.board[self.last_played[0]][self.last_played[1]]
         return 0
-
-    '''def check_win_from(self, row, col):
-        player = self.board[row][col]
-        """
-        Last played action is at (row, col)
-        Check surrounding 7x7 grid for a win
-        """
-
-        consecutive = 1
-        # Check horizontal
-        tmprow = row
-        while tmprow + 1 < GameMeta.ROWS and self.board[tmprow + 1][col] == player:
-            consecutive += 1
-            tmprow += 1
-        tmprow = row
-        while tmprow - 1 >= 0 and self.board[tmprow - 1][col] == player:
-            consecutive += 1
-            tmprow -= 1
-
-        if consecutive >= 4:
-            return True
-
-        # Check vertical
-        consecutive = 1
-        tmpcol = col
-        while tmpcol + 1 < GameMeta.COLS and self.board[row][tmpcol + 1] == player:
-            consecutive += 1
-            tmpcol += 1
-        tmpcol = col
-        while tmpcol - 1 >= 0 and self.board[row][tmpcol - 1] == player:
-            consecutive += 1
-            tmpcol -= 1
-
-        if consecutive >= 4:
-            return True
-
-        # Check diagonal
-        consecutive = 1
-        tmprow = row
-        tmpcol = col
-        while tmprow + 1 < GameMeta.ROWS and tmpcol + 1 < GameMeta.COLS and self.board[tmprow + 1][tmpcol + 1] == player:
-            consecutive += 1
-            tmprow += 1
-            tmpcol += 1
-        tmprow = row
-        tmpcol = col
-        while tmprow - 1 >= 0 and tmpcol - 1 >= 0 and self.board[tmprow - 1][tmpcol - 1] == player:
-            consecutive += 1
-            tmprow -= 1
-            tmpcol -= 1
-
-        if consecutive >= 4:
-            return True
-
-        # Check anti-diagonal
-        consecutive = 1
-        tmprow = row
-        tmpcol = col
-        while tmprow + 1 < GameMeta.ROWS and tmpcol - 1 >= 0 and self.board[tmprow + 1][tmpcol - 1] == player:
-            consecutive += 1
-            tmprow += 1
-            tmpcol -= 1
-        tmprow = row
-        tmpcol = col
-        while tmprow - 1 >= 0 and tmpcol + 1 < GameMeta.COLS and self.board[tmprow - 1][tmpcol + 1] == player:
-            consecutive += 1
-            tmprow -= 1
-            tmpcol += 1
-
-        if consecutive >= 4:
-            return True
-
-        return False'''
 
     def check_win_from(self, row, col):
         player = self.board[row][col]
@@ -159,10 +85,3 @@ class ConnectState:
         #altura da coluna de circulos
         features.extend([GameMeta.ROWS - 1 - h for h in self.height])
         return features
-
-    def get_compact_state(self):
-        #pega o estado do tabuleiro 
-        return (self.board.tobytes(), self.to_play)
-
-
-    #################
