@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 
 def load_training_data(filename):
     data = np.loadtxt(filename, delimiter=',', skiprows=1)
-    X = data[:, :-2]  #os 42 estados 
+    X = data[:, :-1]  #os 42 estados 
     y = data[:, -1]   #ultima coluna movida
     return X, y
 
