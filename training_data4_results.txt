@@ -1,0 +1,1 @@
+Vitórias do strong MCTS: 46/100 (46.00%)

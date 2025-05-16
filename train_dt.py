@@ -12,7 +12,7 @@ def load_training_data(filename):
 
 def train_model():
     # Load data
-    X, y = load_training_data("training_data3.csv")
+    X, y = load_training_data("training_data6.csv")
 
     
     # Split data (80% train, 20% test)

@@ -83,5 +83,5 @@ class ConnectState:
         #proximo jogador
         features.append(self.to_play) 
         #altura da coluna de circulos
-        #features.extend([GameMeta.ROWS - 1 - h for h in self.height])
+        features.extend([GameMeta.ROWS - 1 - h for h in self.height])
         return features

@@ -1,0 +1,20 @@
+Strong MCTS Stats (�ltimo bloco de 100 jogos):
+- Vit�rias: 100 (100.00%)
+- Empates: 0 (0.00%)
+- Derrotas: 0 (0.00%)
+Strong MCTS Stats (�ltimo bloco de 100 jogos):
+- Vit�rias: 99 (99.00%)
+- Empates: 1 (1.00%)
+- Derrotas: 0 (0.00%)
+Strong MCTS Stats (�ltimo bloco de 100 jogos):
+- Vit�rias: 100 (100.00%)
+- Empates: 0 (0.00%)
+- Derrotas: 0 (0.00%)
+Strong MCTS Stats (�ltimo bloco de 100 jogos):
+- Vit�rias: 99 (99.00%)
+- Empates: 1 (1.00%)
+- Derrotas: 0 (0.00%)
+Strong MCTS Stats (�ltimo bloco de 100 jogos):
+- Vit�rias: 99 (99.00%)
+- Empates: 0 (0.00%)
+- Derrotas: 1 (1.00%)
