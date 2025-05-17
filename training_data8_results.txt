@@ -1,0 +1,8 @@
+Strong MCTS Stats (último bloco de 100 jogos):
+- Vitórias: 50 (50.00%)
+- Empates: 6 (6.00%)
+- Derrotas: 44 (44.00%)
+Strong MCTS Stats (último bloco de 100 jogos):
+- Vitórias: 45 (45.00%)
+- Empates: 3 (3.00%)
+- Derrotas: 52 (52.00%)
