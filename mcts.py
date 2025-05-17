@@ -220,16 +220,6 @@ class MCTS:
                 score += 50
 
         return score
-# Adicionar este método à classe ConnectState:
-def connectstate_clone(self):
-    new_state = ConnectState()
-    new_state.board = [row[:] for row in self.board]
-    new_state.to_play = self.to_play
-    new_state.height = self.height[:]
-    new_state.last_played = self.last_played[:]
-    return new_state
-
-ConnectState.clone = connectstate_clone
     
 class WeakMCTS(MCTS):
     def __init__(self, state=ConnectState(), rollout_depth=8):

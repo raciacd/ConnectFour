@@ -85,3 +85,12 @@ class ConnectState:
         #altura da coluna de circulos
         features.extend([GameMeta.ROWS - 1 - h for h in self.height])
         return features
+    
+    # Adicionar este método à classe ConnectState:
+    def clone(self):
+        new_state = ConnectState()
+        new_state.board = [row[:] for row in self.board]
+        new_state.to_play = self.to_play
+        new_state.height = self.height[:]
+        new_state.last_played = self.last_played[:]
+        return new_state

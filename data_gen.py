@@ -18,7 +18,7 @@ def generate_training_data(num_games, output_file, strong_time=1, weak_time=0.2)
         writer = csv.writer(file)
         if not file_exists:
             # Escreve o cabeçalho apenas se o arquivo for novo
-            writer.writerow([f'cell_{i}' for i in range(42)] + ['to_play'] + [f'height_{i}' for i in range(7)] + ['label'])
+            writer.writerow([f'cell_{i}' for i in range(42)] + ['to_play'] + ['label'])
 
         for game_num in range(num_games):
             print(f"[{time.strftime('%H:%M:%S')}] Iniciando jogo {game_num + 1}...")
@@ -27,8 +27,8 @@ def generate_training_data(num_games, output_file, strong_time=1, weak_time=0.2)
             # Alterna quem será o MCTS forte
             mcts_player = 1 if game_num % 2 == 0 else 2
             strong_mcts = MCTS(state)
-            # weak_mcts = WeakMCTS(state)
-            random_ai = RandomAI(state)
+            weak_mcts = WeakMCTS(state)
+            # random_ai = RandomAI(state)
 
             while not state.game_over():
                 current_player = state.to_play
@@ -37,16 +37,16 @@ def generate_training_data(num_games, output_file, strong_time=1, weak_time=0.2)
                     strong_mcts.search(strong_time)
                     move = strong_mcts.best_move()
                     board_flat = flatten_board(state.board)
-                    writer.writerow(board_flat + [current_player, move])
+                    writer.writerow(board_flat + [current_player] + [move])
                 else:
-                    # weak_mcts.search(weak_time)
-                    # move = weak_mcts.best_move()
-                    move = random_ai.best_move()
+                    weak_mcts.search(weak_time)
+                    move = weak_mcts.best_move()
+                    # move = random_ai.best_move()
 
                 # Aplica a jogada no jogo e sincroniza ambos os AIs
                 state.move(move)
                 strong_mcts.move(move)
-                # weak_mcts.move(move)
+                weak_mcts.move(move)
 
             # Verifica se o strong venceu
             outcome = state.get_outcome()
@@ -82,4 +82,4 @@ def generate_training_data(num_games, output_file, strong_time=1, weak_time=0.2)
 #rodar indefinidamente por blocos
 if __name__ == "__main__":
     while True:
-        generate_training_data(num_games=100, output_file="training_data6.csv", strong_time=2, weak_time=0.5)
+        generate_training_data(num_games=100, output_file="training_data9.csv", strong_time=2, weak_time=0.5)
